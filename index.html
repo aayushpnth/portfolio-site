@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offensive Security & Cyber Strategy Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Cyber Stealth -->
+    <!-- Application Structure Plan: A single-page application with a fixed top navigation bar for smooth, intuitive scrolling between sections. This structure creates a linear, story-driven user flow. The sections are logically ordered: introduction (About), evidence of capability (Skills, Projects), validation (Certifications, Alliances), professional summary (Hire Me), knowledge sharing (Blog), and human element (Contact). This design prioritizes usability, allowing recruiters and clients to either get a quick overview or deep-dive into specific areas like project case studies, which are presented in a clean card/modal format to avoid initial clutter. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Technical skill proficiency across various domains. -> Goal: Compare strengths in a visually engaging way. -> Viz/Method: Interactive Radar Chart. -> Interaction: Hover to see tooltips with proficiency scores. -> Justification: A radar chart provides an immediate, holistic view of the user's "Purple Team" capabilities, far more impactful than a static list. -> Library: Chart.js (Canvas).
+        2. Report Info: Detailed project case studies. -> Goal: Organize complex information and allow for optional deep-dives. -> Viz/Method: HTML/CSS Card Grid with JS-powered Modals. -> Interaction: Clicking a card opens a modal with the full "Problem-Solution-Result" narrative. -> Justification: This balances a clean, scannable overview with rich, detailed content, improving user experience by preventing information overload. -> Library: Vanilla JS.
+        3. Report Info: General navigation and user flow. -> Goal: Provide seamless, non-disruptive navigation. -> Viz/Method: Fixed header with JS-powered smooth scrolling and active section highlighting. -> Interaction: Clicking nav links scrolls to the section; scrolling updates the highlighted link. -> Justification: A standard, highly intuitive pattern for SPAs that enhances user orientation. -> Library: Vanilla JS.
+        4. Report Info: CV-like professional summary. -> Goal: Present key professional details concisely. -> Viz/Method: Structured HTML with bullet points and clear headings. -> Interaction: Scrollable content. -> Justification: Provides a quick overview for recruiters without requiring a full CV download. -> Library: HTML/CSS.
+        5. Report Info: Blog posts. -> Goal: Share insights and allow for future content additions. -> Viz/Method: HTML/CSS card grid for blog posts, dynamically generated from JS array. -> Interaction: Clicking cards redirects to separate HTML pages (endpoints) for full blog content. -> Justification: Provides dedicated, shareable URLs for each blog post, enhancing content discoverability and allowing for richer, longer-form articles. -> Library: Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; 
+            color: #c9d1d9;
+        }
+        .font-mono {
+            font-family: 'Roboto Mono', monospace;
+        }
+        .glass-effect {
+            background: rgba(13, 17, 23, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+        }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #22d3ee;
+            transition: width 0.3s ease;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #22d3ee;
+        }
+        .nav-link.active::after, .nav-link:hover::after {
+            width: 100%;
+        }
+        .btn-primary {
+            background-color: #22d3ee;
+            color: #0d1117;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #67e8f9;
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: #22d3ee;
+            border: 1px solid #22d3ee;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #22d3ee;
+            color: #0d1117;
+        }
+        .section-heading {
+            color: #f0f6fc;
+            font-weight: 900;
+        }
+        .section-subheading {
+            font-family: 'Roboto Mono', monospace;
+            color: #22d3ee;
+        }
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #22d3ee;
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 40;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            z-index: 50;
+            display: none;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .modal-backdrop.show, .modal-content.show {
+            display: block;
+            opacity: 1;
+        }
+        .modal-content.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        [data-aos] {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        [data-aos].aos-animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .social-icon {
+            font-size: 2.5rem; /* Larger for better tap target */
+            line-height: 1; /* Adjust line-height to center icon vertically */
+            width: 2.5rem; /* Ensure consistent width/height */
+            height: 2.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header id="header" class="glass-effect fixed top-0 left-0 right-0 z-30">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-xl font-bold font-mono text-white">CyberSec<span class="text-cyan-400">.</span>Portfolio</a>
+            <div class="hidden md:flex space-x-8">
+                <a href="#about" class="nav-link">About</a>
+                <a href="#skills" class="nav-link">Skills</a>
+                <a href="#projects" class="nav-link">Projects</a>
+                <a href="#certifications" class="nav-link">Certifications</a>
+                <a href="#hire-me" class="nav-link">Hire Me</a>
+                <a href="#blog" class="nav-link">Blog</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </div>
+            <div class="md:hidden">
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="min-h-screen flex items-center justify-center text-center bg-cover bg-center" style="background-color: #0d1117;">
+            <div class="container mx-auto px-6" data-aos>
+                <h1 class="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-4">
+                    Offensive Security & Cyber Strategy
+                </h1>
+                <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                    A seasoned cybersecurity researcher specializing in red teaming, penetration testing, and holistic security architecture. Blending offensive tactics with defensive insights to protect critical enterprise assets.
+                </p>
+                <div class="space-x-4">
+                    <a href="#projects" class="btn-primary font-bold py-3 px-8 rounded-lg inline-block">View My Work</a>
+                    <a href="#contact" class="btn-secondary font-bold py-3 px-8 rounded-lg inline-block">Get In Touch</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="py-20 md:py-32">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12" data-aos>
+                    <h2 class="section-subheading text-lg">Introduction</h2>
+                    <h3 class="section-heading text-4xl md:text-5xl">About Me</h3>
+                </div>
+                <div class="max-w-4xl mx-auto text-slate-300 text-lg space-y-6 text-left" data-aos>
+                    <p>
+                        As a dedicated cybersecurity researcher, I bring a unique blend of offensive prowess and defensive acumen to safeguarding digital infrastructures. With a Bachelor's in IT Security & Networking and elite certifications like OSCP, CRTP, and CRTA, I possess a deep, practical understanding of modern attack vectors.
+                    </p>
+                    <p>
+                        My role at Vairav Technology involves leading critical projects in web application protection, API security, and next-generation firewall assessments. My purple team perspective, enhanced by experience in malware analysis and SOC/SIEM technologies, allows me to uncover sophisticated vulnerabilities and design robust defenses. I am passionate about mentoring new talent and empowering clients through technical training, translating complex security concepts into actionable strategies.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="skills" class="py-20 md:py-32 bg-slate-900/50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16" data-aos>
+                    <h2 class="section-subheading text-lg">Competencies</h2>
+                    <h3 class="section-heading text-4xl md:text-5xl">Technical Skillset</h3>
+                    <p class="max-w-2xl mx-auto mt-4 text-slate-400">
+                        This section provides a visual and detailed overview of my technical capabilities. The chart highlights my proficiency across key cybersecurity domains, demonstrating a balanced expertise in both offensive and defensive disciplines. Below, you'll find a categorized list of the primary tools and technologies I leverage to secure digital environments.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
+                    <div class="lg:col-span-3" data-aos>
+                        <div class="chart-container">
+                            <canvas id="skillsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 space-y-8" data-aos>
+                        <div>
+                            <h4 class="text-2xl font-bold text-cyan-400 mb-2">Offensive & Red Team</h4>
+                            <p class="text-slate-300">Metasploit, Cobalt Strike, Burp Suite, Postman, Nmap, PowerShell Empire, Wireshark</p>
+                        </div>
+                        <div>
+                            <h4 class="text-2xl font-bold text-cyan-400 mb-2">Defensive & Blue Team</h4>
+                            <p class="text-slate-300">SIEM/SOC Tech (Splunk), Malware Analysis, Incident Response, Firewall Configuration (Palo Alto, Fortinet)</p>
+                        </div>
+                        <div>
+                            <h4 class="text-2xl font-bold text-cyan-400 mb-2">Leadership & Soft Skills</h4>
+                            <p class="text-slate-300">Team Leadership, Client Training, Intern Mentorship, Technical Communication, Strategic Planning</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="projects" class="py-20 md:py-32">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16" data-aos>
+                    <h2 class="section-subheading text-lg">Portfolio</h2>
+                    <h3 class="section-heading text-4xl md:text-5xl">Impactful Project Case Studies</h3>
+                    <p class="max-w-2xl mx-auto mt-4 text-slate-400">
+                        Here are highlights from some of my recent engagements. Each project demonstrates a real-world application of my skills, following a structured approach to identify challenges, implement solutions, and deliver measurable results. Click on any project to explore the detailed case study.
+                    </p>
+                </div>
+                <div id="project-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                </div>
+            </div>
+        </section>
+
+        <section id="certifications" class="py-20 md:py-32 bg-slate-900/50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16" data-aos>
+                    <h2 class="section-subheading text-lg">Credentials</h2>
+                    <h3 class="section-heading text-4xl md:text-5xl">Certifications & Education</h3>
+                     <p class="max-w-2xl mx-auto mt-4 text-slate-400">
+                        My expertise is backed by industry-recognized certifications and a strong academic foundation. This section highlights my credentials, which validate my skills in both practical, hands-on offensive security and broader enterprise security architecture.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center" data-aos>
+                    <div class="card p-8">
+                        <h4 class="text-xl font-bold text-white mb-2">OSCP</h4>
+                        <p class="text-sm font-mono text-cyan-400 mb-3">Offensive Security</p>
+                        <p class="text-slate-400">Advanced penetration testing and exploit development.</p>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="text-xl font-bold text-white mb-2">CRTP</h4>
+                        <p class="text-sm font-mono text-cyan-400 mb-3">Altered Security</p>
+                        <p class="text-slate-400">Mastery of Active Directory exploitation and lateral movement.</p>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="text-xl font-bold text-white mb-2">CRTA</h4>
+                        <p class="text-sm font-mono text-cyan-400 mb-3">Altered Security</p>
+                        <p class="text-slate-400">Expertise in red team operations and adversary emulation.</p>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="text-xl font-bold text-white mb-2">CASP+</h4>
+                        <p class="text-sm font-mono text-cyan-400 mb-3">CompTIA</p>
+                        <p class="text-slate-400">Advanced security practitioner skills for enterprise environments.</p>
+                    </div>
+                </div>
+                <div class="text-center mt-12" data-aos>
+                     <div class="inline-block card p-6">
+                        <h4 class="text-xl font-bold text-white mb-2">Bachelor of Technology</h4>
+                        <p class="text-sm font-mono text-cyan-400 mb-3">IT Security and Networking</p>
+                        <p class="text-slate-400">Comprehensive foundation in network architecture and security principles.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+         <section id="alliances" class="py-20 md:py-32">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16" data-aos>
+                    <h2 class="section-subheading text-lg">Partnerships</h2>
+                    <h3 class="section-heading text-4xl md:text-5xl">Strategic Technology Alliances</h3>
+                    <p class="max-w-2xl mx-auto mt-4 text-slate-400">
+                        Throughout my career, I have collaborated with leading technology vendors to implement, test, and secure complex enterprise environments. This experience demonstrates my ability to work within diverse ecosystems and leverage industry-standard solutions to enhance security posture.
+                    </p>
+                </div>
+                <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-8" data-aos>
+                    <span class="font-mono text-2xl text-slate-400 hover:text-white transition">Fortinet</span>
+                    <span class="font-mono text-2xl text-slate-400 hover:text-white transition">Microsoft</span>
+                    <span class="font-mono text-2xl text-slate-400 hover:text-white transition">AWS</span>
+                    <span class="font-mono text-2xl text-slate-400 hover:text-white transition">Imperva</span>
+                    <span class="font-mono text-2xl text-slate-400 hover:text-white transition">Palo Alto</span>
+                    <span class="font-mono text-2xl text-slate-400 hover:text-white transition">Ubika</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="hire-me" class="py-20 md:py-32 bg-slate-900/50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16" data-aos>
+                    <h2 class="section-subheading text-lg">Opportunity</h2>
+                    <h3 class="section-heading text-4xl md:text-5xl">Why Hire Me?</h3>
+                    <p class="max-w-2xl mx-auto mt-4 text-slate-400">
+                        This section provides a concise overview of my professional qualifications, experience, and key strengths, serving as a quick reference for potential employers and collaborators.
+                    </p>
+                </div>
+                <div class="max-w-4xl mx-auto text-slate-300 text-lg space-y-8" data-aos>
+                    <div>
+                        <h4 class="text-2xl font-bold text-cyan-400 mb-4">Professional Summary</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li>Experienced Cybersecurity Researcher specializing in offensive security and strategic defense.</li>
+                            <li>Proven track record in web application, API, and next-generation firewall protection.</li>
+                            <li>Skilled in both red team tactics (e.g., Cobalt Strike, Metasploit) and blue team analysis (e.g., malware analysis, SIEM/SOC).</li>
+                            <li>Adept at leading teams, mentoring interns, and providing technical training to clients.</li>
+                            <li>Collaborative professional with experience working with leading vendors like Fortinet, Microsoft, and AWS.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold text-cyan-400 mb-4">Key Skills</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">Penetration Testing</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">Red Teaming</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">Web Application Security</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">API Protection</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-sm">Next-Gen Firewall</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">Malware Analysis</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">SOC/SIEM Technologies</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">Incident Response</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">Active Directory Security</span>
+                            <span class="bg-slate-800 p-3 rounded-md font-mono text-sm">Leadership & Mentorship</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold text-cyan-400 mb-4">Work Experience</h4>
+                        <p class="font-bold text-white">Cybersecurity Researcher</p>
+                        <p class="text-slate-400">Vairav Technology | July 2023 - Present</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1 text-slate-300">
+                            <li>Leading projects in enterprise browser, web application, and API protection.</li>
+                            <li>Conducting assessments on next-generation firewalls.</li>
+                            <li>Providing technical training to clients and mentoring new interns.</li>
+                            <li>Involved in both offensive and defensive security operations.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold text-cyan-400 mb-4">Education</h4>
+                        <p class="font-bold text-white">Bachelor of Technology in IT Security and Networking</p>
+                        <p class="text-slate-400">Relevant University/Institution</p>
+                    </div>
+                    <div class="text-center mt-10">
+                        <p class="text-xl font-semibold text-white mb-4">Ready to discuss your security needs?</p>
+                        <a href="#contact" class="btn-primary font-bold py-3 px-8 rounded-lg inline-block">Contact Me Directly</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="blog" class="py-20 md:py-32">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16" data-aos>
+                    <h2 class="section-subheading text-lg">Insights</h2>
+                    <h3 class="section-heading text-4xl md:text-5xl">My Blog</h3>
+                    <p class="max-w-2xl mx-auto mt-4 text-slate-400">
+                        Explore my thoughts and research on various cybersecurity topics, from offensive techniques to defensive strategies and industry trends.
+                    </p>
+                </div>
+                <div id="blog-posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Blog posts will be dynamically loaded here by JavaScript -->
+                </div>
+                <div class="text-center mt-12" data-aos>
+                    <p class="text-slate-400">Want to see more or add your own insights?</p>
+                    <p class="text-slate-400">New blog posts can be added by editing the `blogPosts` array in the JavaScript section of this file and creating a corresponding HTML file for each post.</p>
+                </div>
+            </div>
+        </section>
+
+
+    </main>
+
+    <footer id="contact" class="bg-slate-900/50 pt-20 pb-10">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="section-subheading text-lg">Get In Touch</h2>
+            <h3 class="section-heading text-4xl md:text-5xl mb-4">Let's Connect</h3>
+            <p class="max-w-xl mx-auto text-slate-400 mb-8">
+                I'm always open to discussing new projects, creative ideas, or opportunities to be part of an ambitious vision. Feel free to reach out.
+            </p>
+            <div class="max-w-2xl mx-auto mb-10">
+                <form id="contact-form" class="space-y-6 text-left">
+                    <div>
+                        <label for="name" class="block text-slate-300 text-sm font-bold mb-2">Name</label>
+                        <input type="text" id="name" name="name" class="shadow appearance-none border border-slate-700 rounded w-full py-3 px-4 text-white leading-tight focus:outline-none focus:shadow-outline bg-slate-800" placeholder="Your Name" required>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-slate-300 text-sm font-bold mb-2">Email</label>
+                        <input type="email" id="email" name="email" class="shadow appearance-none border border-slate-700 rounded w-full py-3 px-4 text-white leading-tight focus:outline-none focus:shadow-outline bg-slate-800" placeholder="your.email@example.com" required>
+                    </div>
+                    <div>
+                        <label for="message" class="block text-slate-300 text-sm font-bold mb-2">Message</label>
+                        <textarea id="message" name="message" rows="6" class="shadow appearance-none border border-slate-700 rounded w-full py-3 px-4 text-white leading-tight focus:outline-none focus:shadow-outline bg-slate-800" placeholder="Your message here..." required></textarea>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn-primary font-bold py-3 px-10 rounded-lg">Send Message</button>
+                    </div>
+                </form>
+                <div id="form-message" class="mt-4 text-center text-green-400" style="display:none;"></div>
+            </div>
+
+            <div class="flex justify-center space-x-6 mb-8">
+                <a href="https://linkedin.com/in/yourprofile" target="_blank" class="social-icon text-slate-400 hover:text-cyan-400 transition" aria-label="LinkedIn">
+                    &#x1F4BC; <!-- Briefcase for LinkedIn -->
+                </a>
+                <a href="https://github.com/yourprofile" target="_blank" class="social-icon text-slate-400 hover:text-cyan-400 transition" aria-label="GitHub">
+                    &#x1F4BB; <!-- Personal Computer for GitHub -->
+                </a>
+                <a href="https://twitter.com/yourprofile" target="_blank" class="social-icon text-slate-400 hover:text-cyan-400 transition" aria-label="Twitter">
+                    &#x1F426; <!-- Bird for Twitter -->
+                </a>
+            </div>
+            <p class="text-slate-500 text-sm">&copy; 2025 Your Name. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <div id="modal-backdrop" class="modal-backdrop"></div>
+    <div id="modal-content" class="modal-content w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 rounded-lg shadow-2xl p-6 md:p-8">
+        <div id="modal-body"></div>
+    </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const projectData = [
+        {
+            id: 'project-1',
+            title: 'Enterprise Web Application & API Security',
+            category: 'Application Security',
+            problem: 'A major e-commerce client\'s platform had unidentified vulnerabilities, exposing them to potential data breaches and financial loss.',
+            solution: 'Conducted a comprehensive security assessment using the OWASP Top 10 framework. Employed advanced tools for deep API fuzzing and authenticated/unauthenticated testing to uncover complex flaws.',
+            result: 'Discovered 5 critical and 12 high-severity vulnerabilities, including a critical SQL injection. Provided a detailed remediation plan that led to a 40% reduction in the application\'s attack surface.',
+            tools: 'Burp Suite Pro, Postman, Nmap, Custom Python Scripts'
+        },
+        {
+            id: 'project-2',
+            title: 'Next-Generation Firewall Evasion Assessment',
+            category: 'Network Security Testing',
+            problem: 'A client needed to validate the effectiveness of their newly deployed Next-Generation Firewall against advanced, evasive threats.',
+            solution: 'Executed a simulated adversary engagement focused on bypassing the NGFW. Utilized protocol tunneling, custom C2 profiles, and network segmentation analysis to identify weak points in the firewall ruleset and configuration.',
+            result: 'Successfully identified a critical bypass vector that could allow for undetected lateral movement. The findings led to a 25% improvement in network segmentation rules and a hardened firewall posture.',
+            tools: 'Cobalt Strike, Metasploit, Fortinet & Palo Alto NGFWs, Wireshark'
+        },
+        {
+            id: 'project-3',
+            title: 'Malware Threat Intelligence & Detection',
+            category: 'Threat Detection & Response',
+            problem: 'The client\'s Security Operations Center (SOC) was struggling to detect custom malware used in targeted attacks, leading to slow incident response.',
+            solution: 'Performed static and dynamic analysis on malware samples using forensic tools. Reverse-engineered attacker TTPs to develop high-fidelity YARA rules and custom correlation alerts within their SIEM (Splunk).',
+            result: 'The new detection rules achieved a 95% detection rate for known malware variants and their derivatives, reducing the average incident response time for these threats by 15%.',
+            tools: 'Splunk, Ghidra, Cuckoo Sandbox, Wireshark, YARA'
+        }
+    ];
+
+    const blogPosts = [
+        {
+            id: 'blog-1',
+            title: 'The Evolving Landscape of API Security Threats',
+            date: 'June 25, 2025',
+            excerpt: 'APIs are the backbone of modern applications, but they also present a growing attack surface. This post delves into common API vulnerabilities and best practices for protection.',
+            url: 'blog-post-1.html' /* New URL for the blog post */
+        },
+        {
+            id: 'blog-2',
+            title: 'Demystifying Next-Gen Firewall Bypass Techniques',
+            date: 'May 10, 2025',
+            excerpt: 'Next-Generation Firewalls are powerful, but not impenetrable. This article explores common methods attackers use to bypass NGFW controls and how defenders can counter them.',
+            url: 'blog-post-2.html' /* New URL for the blog post */
+        },
+        {
+            id: 'blog-3',
+            title: 'From Analysis to Action: Leveraging Malware Insights for Defense',
+            date: 'April 1, 2025',
+            excerpt: 'Malware analysis isn\'t just for understanding threats; it\'s a crucial step in building stronger defenses. Learn how insights from analysis translate into actionable security measures.',
+            url: 'blog-post-3.html' /* New URL for the blog post */
+        }
+        // To add a new blog post:
+        // 1. Copy one of the existing blog post objects above.
+        // 2. Paste it here, ensuring you add a comma after the previous blog post object.
+        // 3. Change the 'id' to a unique value (e.g., 'blog-4').
+        // 4. Update the 'title', 'date', 'excerpt'.
+        // 5. IMPORTANT: Create a new HTML file (e.g., 'blog-post-4.html') with the full content of your blog post.
+        //    Ensure the 'url' field points to this new HTML file.
+    ];
+
+    const projectGrid = document.getElementById('project-grid');
+    projectData.forEach(project => {
+        const card = document.createElement('div');
+        card.className = 'card p-6 rounded-lg flex flex-col cursor-pointer';
+        card.setAttribute('data-aos', '');
+        card.onclick = () => openModal(project.id, 'project');
+        card.innerHTML = `
+            <h4 class="font-mono text-cyan-400 text-sm mb-2">${project.category}</h4>
+            <h3 class="text-2xl font-bold text-white mb-4 flex-grow">${project.title}</h3>
+            <p class="text-slate-400 mb-6">${project.problem}</p>
+            <button class="btn-secondary mt-auto py-2 px-4 rounded-md w-full font-semibold">View Case Study</button>
+        `;
+        projectGrid.appendChild(card);
+    });
+
+    const blogPostsGrid = document.getElementById('blog-posts-grid');
+    blogPosts.forEach(post => {
+        const card = document.createElement('div');
+        card.className = 'card p-6 rounded-lg flex flex-col cursor-pointer';
+        card.setAttribute('data-aos', '');
+        card.innerHTML = `
+            <h4 class="font-mono text-cyan-400 text-sm mb-2">${post.date}</h4>
+            <h3 class="text-2xl font-bold text-white mb-4 flex-grow">${post.title}</h3>
+            <p class="text-slate-400 mb-6">${post.excerpt}</p>
+            <a href="${post.url}" class="btn-secondary mt-auto py-2 px-4 rounded-md w-full font-semibold text-center">Read More</a>
+        `;
+        blogPostsGrid.appendChild(card);
+    });
+
+
+    const skillsChartCtx = document.getElementById('skillsChart').getContext('2d');
+    const skillsChart = new Chart(skillsChartCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Penetration Testing', 'Red Teaming', 'Web App Security', 'Malware Analysis', 'SIEM & SOC Ops', 'Network Defense', 'AD Security'],
+            datasets: [{
+                label: 'Proficiency',
+                data: [95, 90, 92, 85, 85, 88, 93], /* Malware Analysis increased to 85 */
+                backgroundColor: 'rgba(34, 211, 238, 0.2)',
+                borderColor: '#22d3ee',
+                pointBackgroundColor: '#22d3ee',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#22d3ee'
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255, 255, 255, 0.2)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                    pointLabels: {
+                        color: '#c9d1d9',
+                        font: { size: 14, family: "'Roboto Mono', monospace" } /* Increased font size */
+                    },
+                    ticks: {
+                        color: '#0d1117',
+                        backdropColor: 'rgba(201, 209, 217, 0.8)',
+                        stepSize: 20
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { /* Added tooltip configuration */
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += context.raw + '%';
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modalContent = document.getElementById('modal-content');
+    const modalBody = document.getElementById('modal-body');
+
+    window.openModal = (id, type) => {
+        let contentHtml = '';
+        if (type === 'project') {
+            const project = projectData.find(p => p.id === id);
+            if (!project) return;
+            contentHtml = `
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <p class="font-mono text-cyan-400 text-sm">${project.category}</p>
+                        <h3 class="text-3xl font-bold text-white">${project.title}</h3>
+                    </div>
+                    <button onclick="closeModal()" class="text-4xl text-slate-400 hover:text-white transition">&times;</button>
+                </div>
+                <div class="space-y-6 text-slate-300">
+                    <div>
+                        <h4 class="text-xl font-semibold text-cyan-400 mb-2">Problem</h4>
+                        <p>${project.problem}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-semibold text-cyan-400 mb-2">Solution</h4>
+                        <p>${project.solution}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-semibold text-cyan-400 mb-2">Result</h4>
+                        <p>${project.result}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-semibold text-cyan-400 mb-2">Key Tools</h4>
+                        <p class="font-mono text-sm">${project.tools}</p>
+                    </div>
+                </div>
+            `;
+        } 
+        // Blog logic removed from here as it now redirects
+        
+        modalBody.innerHTML = contentHtml;
+        modalBackdrop.classList.add('show');
+        modalContent.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeModal = () => {
+        modalBackdrop.classList.remove('show');
+        modalContent.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    };
+
+    modalBackdrop.addEventListener('click', closeModal);
+
+    // Handle contact form submission
+    const contactForm = document.getElementById('contact-form');
+    const formMessage = document.getElementById('form-message');
+    contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // In a real application, you would send this data to a backend server.
+        // For demonstration, we'll just show a success message.
+        formMessage.textContent = 'Thank you for your message! I will get back to you soon.';
+        formMessage.style.display = 'block';
+        contactForm.reset();
+        setTimeout(() => {
+            formMessage.style.display = 'none';
+        }, 5000); // Hide message after 5 seconds
+    });
+
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('main section');
+    const header = document.getElementById('header');
+    
+    const observerOptions = {
+      root: null,
+      rootMargin: `-${header.offsetHeight}px`,
+      threshold: 0.4
+    };
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${id}`) {
+              link.classList.add('active');
+            }
+          });
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => {
+      sectionObserver.observe(section);
+    });
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            document.querySelector(targetId).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+    
+    const aosObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('aos-animate');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('[data-aos]').forEach(el => {
+        aosObserver.observe(el);
+    });
+});
+</script>
+</body>
+</html>
